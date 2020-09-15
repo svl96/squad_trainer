@@ -719,6 +719,9 @@ def main():
     args.device = device
 
     # Setup logging
+    if not os.path.exists('logs/'):
+        os.mkdir('logs/')
+
     logging.basicConfig(
         filename='logs/log_ %s' % ts,
         format="%(asctime)s - %(levelname)s - %(name)s -   %(message)s",
