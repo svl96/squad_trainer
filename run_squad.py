@@ -171,7 +171,7 @@ def train(args, train_dataset, model, tokenizer):
     set_seed(args)
 
     for _ in train_iterator:
-        epoch_iterator = tqdm(train_dataloader, desc="Iteration", disable=args.local_rank not in [-1, 0])
+        epoch_iterator = tqdm(train_dataloader, desc="Iteration", disable=args.local_rank not in [-1, 0], miniters=100)
         for step, batch in enumerate(epoch_iterator):
 
             # Skip past any already trained steps if resuming training
@@ -254,6 +254,7 @@ def train(args, train_dataset, model, tokenizer):
                     torch.save(optimizer.state_dict(), os.path.join(output_dir, "optimizer.pt"))
                     torch.save(scheduler.state_dict(), os.path.join(output_dir, "scheduler.pt"))
                     logger.info("Saving optimizer and scheduler states to %s", output_dir)
+                    zip_dir(output_dir)
 
             if args.max_steps > 0 and global_step > args.max_steps:
                 epoch_iterator.close()
@@ -266,6 +267,20 @@ def train(args, train_dataset, model, tokenizer):
         tb_writer.close()
 
     return global_step, tr_loss / global_step
+
+import zipfile
+def zip_dir(path):
+    zipf = zipfile.ZipFile(path + '.zip', 'w', zipfile.ZIP_DEFLATED)
+    logger.info("Archive %s", path)
+
+    for root, dirs, files in os.walk(path):
+        if root != 'path':
+            continue
+        for file in files:
+            logger.info("Archive file %s", os.path.join(root, file))
+            zipf.write(os.path.join(root, file))
+    
+    zipf.close()
 
 
 def evaluate(args, model, tokenizer, prefix=""):
@@ -799,7 +814,7 @@ def main():
 
         # Good practice: save your training arguments together with the trained model
         torch.save(args, os.path.join(args.output_dir, "training_args.bin"))
-
+        zip_dir(args.output_dir)
         # Load a trained model and vocabulary that you have fine-tuned
         model = AutoModelForQuestionAnswering.from_pretrained(args.output_dir)  # , force_download=True)
         tokenizer = AutoTokenizer.from_pretrained(args.output_dir, do_lower_case=args.do_lower_case)
