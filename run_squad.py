@@ -274,7 +274,7 @@ def zip_dir(path):
     logger.info("Archive %s", path)
 
     for root, dirs, files in os.walk(path):
-        if root != 'path':
+        if root != path:
             continue
         for file in files:
             logger.info("Archive file %s", os.path.join(root, file))
